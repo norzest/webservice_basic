@@ -9,28 +9,38 @@
     <title>Document</title>
 
     <script>
-        function test(json) {
-            console.log(json);
+        function getBicycleAcc(location) {
+        	$.ajax({
+            	url : 'testXML/' + location + '.xml',
+                dataType : 'xml',
+                error : function(){
+                	alert('error')
+               	},
+                success : function(data){
+                	let locationsArray = [];
+                	
+                	let html = $(data).find("item").each(function(){
+                		let spotName = $(this).find("spot_nm").text();
+                    	let info = $(this).find("geom_json").text();
+                    	let json = JSON.parse(info);
+                    	for (var i = 0; i < json.coordinates[0].length; i++){
+	                    	locationsArray[i] = json.coordinates[0][i];
+						}
+                    	
+	                	$('#sel').append(spotName + '</br>' + locationsArray + '</br>');
+                    });
+                }
+          	}); // end of ajax
         };
         $(function(){
-            $('#btn').click(function(){
-                $.ajax({
-                    url : 'testXML/110.xml',
-                    dataType : 'xml',
-                    error : function(){
-                        alert('error')
-                    },
-                    success : function(data){
-                        console.log('h');
-                    	
-                    }
-                }); // end of ajax
-            }); // end of event
+        	const locations = ["강남구", "강동구"];
+        	for (var i = 0; i < locations.length; i++) {
+				getBicycleAcc(locations[i]);
+        	}
         }); // end of onloading
     </script>
 </head>
 <body>
-    <button id="btn">가져오기</button>
     <div id="sel">
 
     </div>

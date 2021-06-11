@@ -17,13 +17,62 @@
 
 </head>
 <body>
-	<div id="map" style="width: 900px; height: 900px;"></div>
+	<div id="map" style="width: 100%; height: 900px;"></div>
 	<script>
+		function getBicycleAcc(location) {
+			$.ajax({
+				url : 'testXML/' + location + '.xml',
+				dataType : 'xml',
+				error : function() {
+					alert('error')
+				},
+				success : function(data) {
+
+					let xml = $(data).find("item").each(function() {
+						let spotName = $(this).find("spot_nm").text();
+						let lo = $(this).find("lo_crd").text();
+						let la = $(this).find("la_crd").text();
+
+					positions = {title : spotName,
+									lating : new kakao.maps.LatLng(la, lo)};
+
+					// 지도에 마커를 생성하고 표시한다
+					var marker = new kakao.maps.Marker({
+						position : positions.lating, // 마커의 좌표
+						title : positions.title, // 마커의 타이틀
+						map : map
+					// 마커를 표시할 지도 객체
+					});
+						
+					// 지도에 표시할 원을 생성합니다
+					var circle = new kakao.maps.Circle({
+					    center : new kakao.maps.LatLng(la, lo),  // 원의 중심좌표 입니다 
+					    radius: 50, // 미터 단위의 원의 반지름입니다 
+					    strokeWeight: 0, // 선의 두께입니다 
+					    strokeColor: '#FF5500', // 선의 색깔입니다
+					    strokeOpacity: 0, // 선의 불투명도 입니다 1에서 0 사이의 값이며 0에 가까울수록 투명합니다
+					    strokeStyle: 'dashed', // 선의 스타일 입니다
+					    fillColor: '#FF5500', // 채우기 색깔입니다
+					    fillOpacity: 0.5  // 채우기 불투명도 입니다   
+					}); 
+							
+
+					// 지도에 원을 표시합니다 
+					circle.setMap(map);
+	
+				});
+
+				}
+			}); // end of ajax
+		};
+		
+		<%-- KAKAO MAP --%>
+		
 		var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
 		mapOption = {
 			center : new kakao.maps.LatLng(37.56779723637487,
 					126.98248790767876), // 지도의 중심좌표
-			level : 3, // 지도의 확대 레벨
+			level : 8, // 지도의 확대 레벨
 			mapTypeId : kakao.maps.MapTypeId.ROADMAP
 		// 지도종류
 		};
@@ -36,33 +85,16 @@
 
 		// 지도의 상단 우측에 지도 타입 변경 컨트롤을 추가한다
 		map.addControl(mapTypeControl, kakao.maps.ControlPosition.TOPRIGHT);
-	    
-		// 마커 그룹
-		var positions = [
-			{
-				title: '테스트',
-				lating: new kakao.maps.LatLng(37.56779723637487, 126.98248790767876)
-			},
-			{
-				title: '테스트2',
-				lating: new kakao.maps.LatLng(37.567, 126.982)
-			}
-		];
 		
-		for (var i = 0; i < positions.length; ++i) {
-			// 지도에 마커를 생성하고 표시한다
-			var marker = new kakao.maps.Marker({
-			    position: positions[i].lating, // 마커의 좌표
-			    title: positions[i].title, // 마커의 타이틀
-			    map: map // 마커를 표시할 지도 객체
-			});
-		}
-	    
 
-		// 마커에 클릭 이벤트를 등록한다 (우클릭 : rightclick)
-		kakao.maps.event.addListener(marker, 'click', function() {
-		    alert('마커를 클릭했습니다!');
-		});
+		let positions = [];				
+		const locations = [ "강남구", "강동구", "강북구", "강서구", "관악구", "광진구", "구로구", "금천구", "노원구", "도봉구", "동대문구",
+							"동작구", "마포구", "서대문구", "서초구", "성동구", "성북구", "송파구", "양천구", "영등포구", "용산구", "은평구", "종로구", "중랑구"];
+		for (var i = 0; i < locations.length; i++) {
+			getBicycleAcc(locations[i]);
+		}
+		
+
 
 	</script>
 </body>
