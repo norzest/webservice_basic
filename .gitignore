@@ -1,4 +1,6 @@
 /build/
 /.settings/
+/bicycleXML/
+/js/
 .classpath
 .project
