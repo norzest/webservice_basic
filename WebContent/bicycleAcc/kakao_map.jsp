@@ -1,9 +1,8 @@
 <%@ page pageEncoding="utf-8"%>
+<%@ page import="java.util.Arrays"%>
 <%
 	request.setCharacterEncoding("UTF-8");
 	String loc = request.getParameter("loc");
-	if (loc == "") { loc = "강남구"; }
-	
 	String[] locArr = {
    			"강남구", "강동구", "강북구", "강서구",
    			"관악구", "광진구", "구로구", "금천구",
@@ -11,7 +10,6 @@
    			"마포구", "서대문구", "서초구", "성동구", 
    			"성북구", "송파구", "양천구", "영등포구",
    			"용산구", "은평구", "종로구", "중랑구"};
-	
 	double[][] laloArr = {
    			{37.4959854, 127.0664091}, {37.5492077, 127.1464824},
    			{37.6469954, 127.0147158}, {37.5657617, 126.8226561},
@@ -27,15 +25,19 @@
    			{37.5990998, 126.9861493}, {37.5953795, 127.0939669} 	
 	};
 	
+	if (!Arrays.asList(locArr).contains(loc)) {
+		%><script>alert('해당하는 장소가 없어 송파구로 검색됩니다');</script><%
+		loc = "송파구";
+	}
+	
 	double laa = 37.56779723637487;
 	double loo = 126.98248790767876;
-	int level = 8;
+	int level = 5;
 	
 	for(int i = 0; i < locArr.length; ++i) {
 		if(locArr[i].equals(loc)) {
 			laa = laloArr[i][0];
 			loo = laloArr[i][1];
-			level = 5;
 		}
 	}
 %>
@@ -45,15 +47,11 @@
 <meta charset="UTF-8">
 <title>Document</title>
 
-<script src="../js/jquery-3.6.0.js"></script>
+<script src="<%=request.getContextPath()%>/js/jquery-3.6.0.js"></script>
 <script type="text/javascript"
 	src="//dapi.kakao.com/v2/maps/sdk.js?appkey=daa5ceef8e2d3962bdb57f5aa30c0356"></script>
 <script type="text/javascript"
 	src="//dapi.kakao.com/v2/maps/sdk.js?appkey=daa5ceef8e2d3962bdb57f5aa30c0356&libraries=LIBRARY"></script>
-<script type="text/javascript"
-	src="http://apis.data.go.kr/1360000/VilageFcstInfoService/getVilageFcst
-	?serviceKey=BhPAjgZlO9Dmp6n8gIBEIy9FvRhjM7ftFPr1Ue%2FEUZ84r9Onu%2BhXUcamJrZ0a9cxAfHBIOvRbntRMdgRUhzDjA%3D%3D&numOfRows=10&pageNo=1
-	&base_date=20210607&base_time=1100&nx=60&ny=127"></script>
 
 <%------------------ style start ------------------%>
 <%------------------ style start ------------------%>
@@ -62,6 +60,20 @@
 		margin:0;
 		height:100%;
 	}
+	.map_wrap, .map_wrap * {margin:0; padding:0;font-family:'Malgun Gothic',dotum,'돋움',sans-serif;font-size:12px;}
+	.map_wrap {position:relative;width:100%;height:350px;}
+	#category {position:absolute;top:10px;left:10px;border-radius: 5px; border:1px solid #909090;box-shadow: 0 1px 1px rgba(0, 0, 0, 0.4);background: #fff;overflow: hidden;z-index: 2;}
+	#category li {float:left;list-style: none;width:50px;px;border-right:1px solid #acacac;padding:6px 0;text-align: center; cursor: pointer;}
+	#category li.on {background: #eee;}
+	#category li:hover {background: #ffe6e6;border-left:1px solid #acacac;margin-left: -1px;}
+	#category li:last-child{margin-right:0;border-right:0;}
+	#category li span {display: block;margin:0 auto 3px;width:27px;height: 28px;}
+	#category li .red {background-position: -10px 0;}
+	#category li .orange {background-position: -10px -36px;}
+	#category li .yellow {background-position: -10px -72px;}
+	#category li .blue {background-position: -10px -108px;}
+	#category li .category_bg {border-radius:10px;box-shadow: 2px 2px 2px gray;}
+	#category li.on .category_bg {background-position-x:-46px;}
 	
 	.wrap {position: absolute;left: 0;bottom: 40px;width: 288px;height: 132px;margin-left: -144px;text-align: left;overflow: hidden;font-size: 12px;font-family: 'Malgun Gothic', dotum, '돋움', sans-serif;line-height: 1.5;}
     .wrap * {padding: 0;margin: 0;}
@@ -77,17 +89,56 @@
     .info .img {position: absolute;top: 6px;left: 5px;width: 73px;height: 71px;border: 1px solid #ddd;color: #888;overflow: hidden;}
     .info:after {content: '';position: absolute;margin-left: -12px;left: 50%;bottom: 0;width: 22px;height: 12px;background: url('https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/vertex_white.png')}
     .info .link {color: #5085BB;}
+	
+	#menu_wrap {position:absolute;top:0;left:0;bottom:0;width:200px;height:20px;border:1px solid #909090;margin:17px 0 30px 230px;padding:5px;overflow-y:auto;background:rgba(255, 255, 255, 0.7);z-index: 1;font-size:12px;border-radius: 10px;}
+	.bg_white {background:#fff;}
+	#menu_wrap .option{text-align: center;}
+	#menu_wrap .option p {margin: auto;}  
+	#menu_wrap .option button {margin-left:5px;}
 </style>
 <%------------------ style end ------------------%>
 <%------------------ style end ------------------%>
 </head>
 <body>
-	<div id="map" style="width: 90%; height: 100%;"></div>
+	<div class="map_wrap" style="width:100%;height:100%;position:relative;overflow:hidden;"> 
+	    <!-- 지도가 표시될 div -->
+	<div id="map" style="width:100%;height:100%;"></div>
+	<ul id="category">
+        <li id="BK9" data-order="0" onclick="changeMarkerImage('Red');"> 
+            <span class="category_bg red" style="background-color:#ff0000;"></span>
+        </li>       
+        <li id="MT1" data-order="1" onclick="changeMarkerImage('Orange');"> 
+            <span class="category_bg orange" style="background-color:#ff7700;"></span>
+        </li>  
+        <li id="PM9" data-order="2" onclick="changeMarkerImage('Yellow');"> 
+            <span class="category_bg yellow" style="background-color:#ffff00;"></span>
+        </li>  
+        <li id="OL7" data-order="3" onclick="changeMarkerImage('Blue');"> 
+            <span class="category_bg blue" style="background-color:#0000ff;"></span>
+        </li>     
+    </ul>
+    
+    <div id="menu_wrap" class="bg_white">
+        <div class="option">
+            <div>
+				장소 : <input type="text" placeholder="ex) 강남구"
+				id="keyword" size="15" onKeypress="javascript:if(event.keyCode==13){searchPlaces();}"> 
+            	<button type="submit" onclick="searchPlaces();">검색</button> 
+            </div>
+        </div>
+    </div>
+	</div>
 	
 	<script>
 		var markers = [];
-		var imageSrc = 'https://image.flaticon.com/icons/png/512/130/130151.png';
-
+		var circles = [];
+		
+		var imageSrcBlue = 'images/markerBlue.png';
+		var imageSrcRed =  'images/markerRed.png';
+		var imageSrcOrange =  'images/markerOrange.png';
+		var imageSrcYellow =  'images/markerYellow.png';
+    	let imageColor = imageSrcRed;
+    	
 		let content = '<div class="wrap">' + 
 	    '    <div class="info">' + 
 	    '        <div class="title">' + 
@@ -114,7 +165,7 @@
 	    // 커스텀 오버레이를 닫기 위해 호출되는 함수입니다 
 		function closeOverlay() {
 		    overlay.setMap(null);     
-		}
+		};
 	    
 	    function setOverlayContent(marker,cntArr) {
 	    	var temp  = marker.getTitle();
@@ -122,7 +173,7 @@
 			content = '<div class="wrap">' + 
 		    '    <div class="info">' + 
 		    '        <div class="title">' + 
-		    			temp.substring(0, temp.indexOf("(")) + 
+		    			temp.substring(5, temp.indexOf("(")) + 
 		    '            <div class="close" onclick="closeOverlay()" title="닫기"></div>' + 
 		    '        </div>' + 
 		    '        <div class="body" style="padding:5px;">' + 
@@ -134,15 +185,31 @@
 		    '    </div>' +    
 		    '</div>';
 		    overlay.setContent(content);
+	    };
+	    
+	    function createMarkerImage(markerSize, markerColor) {
+	    	if (markerColor == 'Red') {
+	    		imageColor = imageSrcRed;
+	    	} else if (markerColor == 'Orange') {
+	    		imageColor = imageSrcOrange;
+	    	} else if (markerColor == 'Yellow') {
+	    		imageColor = imageSrcYellow;
+	    	} else if (markerColor == 'Blue') {
+	    		imageColor = imageSrcBlue;
+	    	}
+	    	
+			var markerImage = new kakao.maps.MarkerImage(imageColor,
+					new kakao.maps.Size(markerSize, markerSize),
+					{offset: new kakao.maps.Point(markerSize/2, markerSize)});
+
+	    	return markerImage;
 	    }
 
 		// 지도에 마커를 생성하고 표시한다
 		function displayMarker(positions, cntArr) {	
 			var markerSize = (11-<%=level%>)*10;
-			var markerImage = new kakao.maps.MarkerImage(imageSrc,
-					new kakao.maps.Size(markerSize, markerSize),
-					{offset: new kakao.maps.Point(markerSize/2, markerSize/2)});
-
+			var markerImage = createMarkerImage(markerSize, imageColor);
+			
 			var marker = new kakao.maps.Marker({
 				image : markerImage,
 				position : positions.lating, // 마커의 좌표
@@ -158,8 +225,21 @@
 			});
 
 			markers.push(marker);
-		}
+		};
 		
+		// 지도가 확대 또는 축소되면 마커의 이미지 크기가 변경되도록 합니다
+		function changeMarkerImage(markerColor) {				
+			var markerSize = (11-map.getLevel())*10;
+			if (markerSize < 0) {
+				markerSize = 0;
+			}
+			var set_markerI = createMarkerImage(markerSize, markerColor);
+			
+			for (var i = 0; i < markers.length; i++) {
+				markers[i].setImage(set_markerI);
+			}
+			
+		};
 		
 		// 지도에 표시할 원을 생성합니다
 		function displayCircle(la, lo) {
@@ -176,35 +256,42 @@
 			});
 
 			// 지도에 원을 표시합니다 
-			circle.setMap(map);			
+			circle.setMap(map);
+			circles.push(circle);
+		};
+		
+		// 키워드 검색을 요청하는 함수입니다
+		function searchPlaces() {
+
+		    var keyword = document.getElementById('keyword').value;
+		    document.getElementById('keyword').value = '';
+		    if (!locations.includes(keyword)) {
+		        alert('해당하는 장소가 없습니다');
+		        return false;
+		    }
+		    
+		    setCenter(keyword);
+
 		}
 		
-
-		// 지도가 확대 또는 축소되면 마지막 파라미터로 넘어온 함수를 호출하도록 이벤트를 등록합니다
-		function changeMarkerImage() {				
-			// 지도의 현재 레벨을 얻어옵니다
-			var mapLevel = map.getLevel();
-			var markerSize = (11-mapLevel)*10;
-			if (markerSize < 0) {
-				markerSize = 0;
-			}
-			var set_markerI = new kakao.maps.MarkerImage(imageSrc,
-					new kakao.maps.Size(markerSize, markerSize),
-					{offset: new kakao.maps.Point(markerSize/2, markerSize/2)}); 
-
+		// 좌표값을 수정합니다
+		function setCenter(keyword) {
+			var index = locations.indexOf(keyword);
 			
-			for (var i = 0; i < markers.length; i++) {
-				markers[i].setImage(set_markerI);
-			}
-			
-		};
+		    // 이동할 위도 경도 위치를 생성합니다 
+		    var moveLatLon = new kakao.maps.LatLng(latlng[index][0], latlng[index][1]);
+		    
+		    // 지도 중심을 이동 시킵니다
+		    map.setCenter(moveLatLon);
+		    map.setLevel(<%=level%>);
+		}
 		
 		function getBicycleAcc(location) {
 			$.ajax({
-				url : 'testXML/' + location + '.xml',
+				url : 'bicycleXML/' + location + '.xml',
 				dataType : 'xml',
 				error : function() {
-					alert('error')
+					console.log('error');
 				},
 				success : function(data) {
 
@@ -237,15 +324,20 @@
 		
 		<%-- KAKAO MAP --%>
 		
-		const locations = [
-			"강남구", "강동구", "강북구", "강서구",
-			"관악구", "광진구", "구로구", "금천구",
-			"노원구", "도봉구", "동대문구", "동작구",
-			"마포구", "서대문구", "서초구", "성동구", 
-			"성북구","송파구", "양천구", "영등포구", 
-			"용산구", "은평구", "종로구", "중랑구"
-			];
-
+		const locations = new Array();
+		<%for (String str : locArr) {%>
+			locations.push("<%=str%>");
+		<%}%>
+		
+		const latlng = new Array();
+		<%for (int i = 0 ; i < laloArr.length; i++) {%>
+			var temp = new Array();
+			<%for (double it : laloArr[i]) {%>
+				temp.push(<%=it%>);
+			<%}%>
+			latlng.push(temp);
+		<%}%>
+		
 		var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
 		mapOption = {
 			center : new kakao.maps.LatLng(<%=laa%>,
@@ -257,6 +349,7 @@
 
 		// 지도를 생성한다 
 		var map = new kakao.maps.Map(mapContainer, mapOption);
+		
 
 		// 지도 확대 축소를 제어할 수 있는  줌 컨트롤을 생성합니다
 		var zoomControl = new kakao.maps.ZoomControl();
@@ -273,8 +366,26 @@
 		}
 
 		// 지도가 확대 또는 축소되면 마지막 파라미터로 넘어온 함수를 호출하도록 이벤트를 등록합니다
-		kakao.maps.event.addListener(map, 'zoom_changed', changeMarkerImage);
-		changeMarkerImage();
+		kakao.maps.event.addListener(map, 'zoom_changed', function() {
+			var mapLevel = map.getLevel();
+			
+			if (mapLevel >= 6) {
+				if(circles[0].getMap() != null) {
+					for (var i = 0; i < circles.length; i++) {
+						circles[i].setMap(null);
+					}	
+				}
+			} else {
+				if(circles[0].getMap() == null) {
+					for (var i = 0; i < circles.length; i++) {
+						circles[i].setMap(map);
+					}
+				}
+			}
+			
+			changeMarkerImage();
+			
+			});
 	</script>
 </body>
 </html>
